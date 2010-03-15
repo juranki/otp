@@ -146,6 +146,8 @@
 		  | {'del_member', name(), pid()},
 		  #state{}) -> {'noreply', #state{}}.
 
+-spec all(fun((T) -> boolean()), List :: [T]) ->
+		 boolean() when is_subtype(T, term()). % (*)
 
 -spec get_closest_pid(term()) -> 
 			     Return :: pid()
@@ -347,6 +349,14 @@ indent_basics(X, Y, Z)				% AD added clause
       X < 42, Z > 13;				% unsure about this one
       Y =:= 4711 ->
     foo.
+
+
+
+indent_nested() ->
+    [
+     {foo, 2, "string"},
+     {bar, 3, "another string"}
+    ].
 
 
 indent_icr(Z) -> 				% icr = if case receive
