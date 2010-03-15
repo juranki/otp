@@ -917,6 +917,16 @@ fix_params({{sql_char, Max}, InOut, Values}) ->
 fix_params({{sql_varchar, Max}, InOut, Values}) ->
      NewValues = string_terminate(Values),
     {?USER_VARCHAR, Max, fix_inout(InOut), NewValues};
+fix_params({'sql_timestamp', InOut, Values}) ->
+     NewValues =
+ 	case (catch 
+ 	      lists:map(fun({{Year,Month,Day},{Hour,Minute,Second}}) -> 
+                                {Year,Month,Day,Hour,Minute,Second}
+                        end, Values)) of
+ 	    Result ->
+ 		Result
+ 	end,
+    {?USER_TIMESTAMP, fix_inout(InOut), NewValues};
 fix_params({{sql_wchar, Max}, InOut, Values}) ->
     NewValues = string_terminate(Values),
     {?USER_WCHAR, Max, fix_inout(InOut), NewValues};
