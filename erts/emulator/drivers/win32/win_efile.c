@@ -27,6 +27,11 @@
 #include "erl_efile.h"
 
 /*
+ * FILE_WRITE_TO_END_OF_FILE might not be defined in platform SDK headers
+ */
+#define FILE_WRITE_TO_END_OF_FILE       0xffffffff
+
+/*
  * Microsoft-specific function to map a WIN32 error code to a Posix errno.
  */
 
@@ -1082,12 +1087,17 @@ char* buf;			/* Buffer to write. */
 size_t count;			/* Number of bytes to write. */
 {
     DWORD written;		/* Bytes written in last operation. */
+    OVERLAPPED o;
+    OVERLAPPED* op = NULL;
 
     if (flags & EFILE_MODE_APPEND) {
-	(void) SetFilePointer((HANDLE) fd, 0, NULL, FILE_END);
+        memset(&o, 0, sizeof(o));
+        o.Offset = FILE_WRITE_TO_END_OF_FILE;
+        o.OffsetHigh = -1;
+        op = &o;
     }
     while (count > 0) {
-	if (!WriteFile((HANDLE) fd, buf, count, &written, NULL))
+	if (!WriteFile((HANDLE) fd, buf, count, &written, op))
 	    return set_error(errInfo);
 	buf += written;
 	count -= written;
@@ -1107,11 +1117,16 @@ efile_writev(Efile_error* errInfo,   /* Where to return error codes */
 	     size_t size)            /* Number of bytes to write */
 {
     int cnt;                         /* Buffers so far written */
+    OVERLAPPED o;
+    OVERLAPPED* op = NULL;
 
     ASSERT(iovcnt >= 0);
     
     if (flags & EFILE_MODE_APPEND) {
-	(void) SetFilePointer((HANDLE) fd, 0, NULL, FILE_END);
+        memset(&o, 0, sizeof(o));
+        o.Offset = FILE_WRITE_TO_END_OF_FILE;
+        o.OffsetHigh = -1;
+        op = &o;
     }
     for (cnt = 0; cnt < iovcnt; cnt++) {
 	if (iov[cnt].iov_base && iov[cnt].iov_len > 0) {
@@ -1123,7 +1138,7 @@ efile_writev(Efile_error* errInfo,   /* Where to return error codes */
 			       iov[cnt].iov_base + p, 
 			       iov[cnt].iov_len - p, 
 			       &w, 
-			       NULL))
+			       op))
 		    return set_error(errInfo);
 	    }
 	}
